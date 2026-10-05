@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP Number Game — Up to 40 Numbers</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:Arial, sans-serif;
+  background:#0b0f19;
+  color:#f3f4f6;
+  padding:15px;
+  padding-bottom:60px;
+}
+.app{
+  max-width:500px;
+  margin:0 auto;
+}
+/* HEADER */
+.header{
+  background:linear-gradient(135deg,#1e1b4b,#312e81);
+  padding:20px;
+  border-radius:24px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.4);
+  margin-bottom:15px;
+}
+.brand-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+}
+.brand{
+  font-size:16px;
+  font-weight:900;
+  color:#60a5fa;
+  letter-spacing:1px;
+}
+.live-badge{
+  background:rgba(16,185,129,0.2);
+  color:#34d399;
+  padding:5px 10px;
+  border-radius:20px;
+  font-size:10px;
+  font-weight:bold;
+}
+.balance-box{
+  background:rgba(255,255,255,0.05);
+  padding:15px;
+  border-radius:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border:1px solid rgba(255,255,255,0.08);
+}
+.balance-box small{
+  color:#9ca3af;
+  font-size:11px;
+  text-transform:uppercase;
+}
+.balance-box h2{
+  font-size:28px;
+  color:#fff;
+  margin-top:2px;
+}
+.add-btn{
+  background:#f59e0b;
+  color:#000;
+  border:0;
+  padding:8px 14px;
+  border-radius:10px;
+  font-weight:bold;
+  font-size:12px;
+  cursor:pointer;
+}
+
+/* CARD */
+.card{
+  background:#131c2e;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:15px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.3);
+}
+.card-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+  font-size:15px;
+  font-weight:bold;
+}
+.card-title span{
+  color:#9ca3af;
+  font-size:11px;
+}
+
+/* SELECTORS */
+.config-row{
+  margin-bottom:12px;
+}
+.config-row label{
+  display:block;
+  color:#9ca3af;
+  font-size:11px;
+  margin-bottom:6px;
+  text-transform:uppercase;
+}
+.options-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.opt-btn{
+  background:#090d16;
+  border:1px solid rgba(255,255,255,0.08);
+  color:#fff;
+  padding:10px;
+  border-radius:10px;
+  font-weight:bold;
+  font-size:12px;
+  cursor:pointer;
+  transition:0.2s;
+}
+.opt-btn.active{
+  background:#3b82f6;
+  border-color:#3b82f6;
+  box-shadow:0 0 10px rgba(59,130,246,0.4);
+}
+
+/* QUANTITY SLIDER */
+.quantity-box {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#090d16;
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.08);
+}
+.quantity-box input[type="range"] {
+  flex:1;
+  accent-color:#3b82f6;
+  cursor:pointer;
+}
+.quantity-value {
+  font-weight:bold;
+  color:#60a5fa;
+  font-size:14px;
+  min-width:70px;
+  text-align:right;
+}
+
+/* MANUAL INPUT ROW FOR WEB USERS */
+.manual-input-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.manual-input-box input {
+  flex: 1;
+  background: #090d16;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+}
+.manual-input-box input::placeholder {
+  color: #6b7280;
+  font-weight: normal;
+}
+.add-num-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: 0;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* CHOSEN NUMBERS CHIPS CONTAINER */
+.selected-container{
+  background:linear-gradient(145deg,#0d1424,#16223b);
+  border:1px solid rgba(59,130,246,0.3);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+  text-align:center;
+}
+.selected-container small{
+  color:#9ca3af;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  display:block;
+  margin-bottom:6px;
+}
+.chips-flex{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  justify-content:center;
+  max-height:100px;
+  overflow-y:auto;
+}
+.chip{
+  background:#3b82f6;
+  color:#fff;
+  padding:5px 10px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:bold;
+  letter-spacing:1px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.chip span{
+  cursor:pointer;
+  color:#93c5fd;
+  font-size:11px;
+}
+
+/* STATS */
+.stats-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:12px;
+}
+.stat-box{
+  background:#090d16;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.05);
+  text-align:center;
+}
+.stat-box small{
+  color:#9ca3af;
+  font-size:10px;
+}
+.stat-box h3{
+  font-size:18px;
+  margin-top:2px;
+}
+
+/* ACTIONS */
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1.3fr;
+  gap:10px;
+}
+button{font-family:inherit;cursor:pointer;}
+.auto-btn{
+  background:rgba(255,255,255,0.05);
+  color:#60a5fa;
+  border:1px solid rgba(96,165,250,0.3);
+  border-radius:12px;
+  font-weight:bold;
+  font-size:12px;
+  padding:12px;
+}
+.play-btn{
+  background:linear-gradient(135deg,#10b981,#059669);
+  color:#fff;
+  border:0;
+  border-radius:12px;
+  font-weight:bold;
+  font-size:13px;
+  padding:12px;
+  box-shadow:0 4px 15px rgba(16,185,129,0.3);
+}
+.next-btn{
+  width:100%;
+  margin-top:10px;
+  background:#f59e0b;
+  color:#000;
+  border:0;
+  border-radius:12px;
+  font-weight:bold;
+  padding:12px;
+  display:none;
+}
+
+/* RESULT BOX */
+.result{
+  display:none;
+  margin-top:12px;
+  text-align:center;
+  padding:12px;
+  border-radius:10px;
+  font-weight:bold;
+  font-size:13px;
+}
+.result.win{display:block;background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.4);}
+.result.loss{display:block;background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.4);}
+
+/* NUMBER GRID */
+.number-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+  max-height:240px;
+  overflow-y:auto;
+  padding-right:4px;
+}
+.number-grid::-webkit-scrollbar{width:4px}
+.number-grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:4px}
+
+.num{
+  height:42px;
+  background:#090d16;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;
+  color:#fff;
+  font-weight:bold;
+  font-size:12px;
+}
+.num.selected{
+  background:#3b82f6;
+  border-color:#3b82f6;
+  box-shadow:0 0 10px rgba(59,130,246,0.5);
+}
+
+/* HISTORY */
+.history-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#090d16;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.05);
+  margin-bottom:6px;
+  font-size:12px;
+}
+.win-badge{color:#34d399;font-weight:bold;}
+.loss-badge{color:#f87171;font-weight:bold;}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  transform:translateX(-50%) translateY(20px);
+  opacity:0;
+  background:#1e293b;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:10px;
+  font-size:12px;
+  transition:0.3s;
+  pointer-events:none;
+  z-index:999;
+  border:1px solid rgba(255,255,255,0.1);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand-top">
+      <div class="brand">✨ VIP NUMBER GAME</div>
+      <div class="live-badge" id="statusBadge">● LIVE</div>
+    </div>
+    <div class="balance-box">
+      <div>
+        <small>Demo Balance</small>
+        <h2 id="balanceText">600 CR</h2>
+      </div>
+      <button class="add-btn" onclick="addCredits()">＋ 100 CR</button>
+    </div>
+  </header>
+
+  <!-- CONFIG & CONTROLS -->
+  <section class="card">
+    <div class="card-title">
+      <span id="roundTitle">Personal Round #001</span>
+      <span style="color:#60a5fa">Range: 001 — 999</span>
+    </div>
+
+    <!-- STAKE SELECTOR -->
+    <div class="config-row">
+      <label>የመጫወቻ መጠን (Stake per Ticket)</label>
+      <div class="options-grid">
+        <button class="opt-btn" onclick="setStake(10)">ባለ 10 CR</button>
+        <button class="opt-btn active" onclick="setStake(20)">ባለ 20 CR</button>
+        <button class="opt-btn" onclick="setStake(50)">ባለ 50 CR</button>
+      </div>
+    </div>
+
+    <!-- QUANTITY SLIDER (Default set to 6) -->
+    <div class="config-row">
+      <label>የሚመርጧቸው ቁጥሮች ብዛት (Quantity: እስከ 40)</label>
+      <div class="quantity-box">
+        <input type="range" id="countRange" min="1" max="40" value="6" oninput="onQuantityChange(this.value)">
+        <div class="quantity-value" id="quantityLabel">6 ቁጥር</div>
+      </div>
+    </div>
+
+    <!-- WEB MANUAL INPUT FIELD -->
+    <div class="config-row">
+      <label>ቁጥር በዌብ መጻፊያ (በቀጥታ ያስገቡ - ምሳሌ: 045)</label>
+      <div class="manual-input-box">
+        <input type="text" id="manualInput" placeholder="ቁጥር ይጻፉ (001-999)" maxlength="3">
+        <button class="add-num-btn" onclick="addManualNumber()">＋ ጨምር</button>
+      </div>
+    </div>
+
+    <!-- SELECTED NUMBERS DISPLAY -->
+    <div class="selected-container">
+      <small>የመረጧቸው ቁጥሮች (Selected Numbers)</small>
+      <div class="chips-flex" id="chipsContainer"></div>
+    </div>
+
+    <!-- TOTAL COST & REWARD STATS -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <small>አጠቃላይ ወጪ (Total Cost)</small>
+        <h3 id="totalCostText" style="color:#f87171">120 CR</h3>
+      </div>
+      <div class="stat-box">
+        <small>ሊያሸንፉ የሚችሉት (Reward)</small>
+        <h3 id="totalRewardText" style="color:#34d399">600 CR</h3>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="auto-btn" onclick="autoPick()">✨ አውቶ ፒክ</button>
+      <button class="play-btn" onclick="playGame()">▶ አሁን ይጫወቱ</button>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+    <button id="nextBtn" class="next-btn" onclick="nextRound()">🔥 ቀጣይ ዙር</button>
+  </section>
+
+  <!-- NUMBER SELECTOR GRID -->
+  <section class="card">
+    <div class="card-title">
+      <strong>ቁጥር ይምረጡ (ከ 001 - 999)</strong>
+      <span id="selectGuide">እባክዎ እስከ 6 ቁጥሮች ይምረጡ</span>
+    </div>
+    <div id="gridContainer" class="number-grid"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="card">
+    <div class="card-title">
+      <strong>የጨዋታ ታሪክ</strong>
+      <span id="historyCount">0 ዙሮች</span>
+    </div>
+    <div id="historyList"></div>
+  </section>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let state = {
+  balance: 600,
+  stake: 20,          
+  count: 6,           
+  selected: ["001","007","012","018","027","035"],  
+  roundNum: 1,
+  active: true,
+  history: []
+};
+
+const samplePool = [
+  "001","007","012","018","027","035","044","050","066","077",
+  "088","099","111","124","150","200","250","300","333","404",
+  "500","517","600","707","808","900","915","950","988","999"
+];
+
+function init(){
+  document.getElementById("balanceText").textContent = state.balance + " CR";
+  document.getElementById("roundTitle").textContent = "Personal Round #" + String(state.roundNum).padStart(3,"0");
+  document.getElementById("countRange").value = state.count;
+  document.getElementById("quantityLabel").textContent = state.count + " ቁጥር";
+  
+  updateCalculations();
+  renderGrid();
+  renderChips();
+  renderHistory();
+}
+
+function setStake(amount) {
+  state.stake = amount;
+  document.querySelectorAll('.config-row:nth-child(1) .opt-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if(btn.textContent.includes(amount + " CR")) btn.classList.add('active');
+  });
+  updateCalculations();
+}
+
+function onQuantityChange(val) {
+  let num = parseInt(val);
+  if(num > 40) num = 40;
+  state.count = num;
+  
+  document.getElementById("quantityLabel").textContent = num + " ቁጥር";
+  document.getElementById("selectGuide").textContent = `እባክዎ እስከ ${num} ቁጥሮች ይምረጡ`;
+
+  if(state.selected.length > num) {
+    state.selected = state.selected.slice(0, num);
+  } else if(state.selected.length < num) {
+    while(state.selected.length < num) {
+      const randNum = Math.floor(Math.random() * 999) + 1;
+      const formatted = String(randNum).padStart(3, "0");
+      if(!state.selected.includes(formatted)) state.selected.push(formatted);
+    }
+  }
+
+  updateCalculations();
+  renderGrid();
+  renderChips();
+}
+
+// Web Manual Input Functionality
+function addManualNumber() {
+  if(!state.active) {
+    showToast("ይህ ዙር አልቋል!");
+    return;
+  }
+
+  const inputEl = document.getElementById("manualInput");
+  let val = inputEl.value.trim();
+  
+  if(!val) {
+    showToast("እባክዎ ቁጥር ይጻፉ!");
+    return;
+  }
+
+  // Format to 3 digits (e.g. 5 -> 005, 45 -> 045)
+  let formatted = val.padStart(3, "0");
+  
+  if(parseInt(formatted) < 1 || parseInt(formatted) > 999) {
+    showToast("እባክዎ ከ 001 እስከ 999 ያለ ቁጥር ያስገቡ!");
+    return;
+  }
+
+  if(state.selected.includes(formatted)) {
+    showToast("ይህ ቁጥር አስቀድሞ ተመርጧል!");
+    return;
+  }
+
+  if(state.selected.length >= state.count) {
+    showToast(`የመረጡት ሊሚት እስከ ${state.count} ቁጥር ብቻ ነው!`);
+    return;
+  }
+
+  state.selected.push(formatted);
+  inputEl.value = "";
+  
+  renderGrid();
+  renderChips();
+  updateCalculations();
+  showToast(`ቁጥር ${formatted} ተጨመረ!`);
+}
+
+function updateCalculations() {
+  const totalCost = state.stake * state.count;
+  const totalReward = state.stake * 5 * state.count;
+
+  document.getElementById("totalCostText").textContent = totalCost + " CR";
+  document.getElementById("totalRewardText").textContent = totalReward + " CR";
+}
+
+function renderChips() {
+  const container = document.getElementById("chipsContainer");
+  container.innerHTML = "";
+  state.selected.forEach(num => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.innerHTML = `${num} <span onclick="removeChip('${num}')">✕</span>`;
+    container.appendChild(chip);
+  });
+}
+
+function removeChip(num) {
+  if(!state.active) return;
+  if(state.selected.length <= 1) {
+    showToast("ቢያንስ 1 ቁጥር መኖር አለበት!");
+    return;
+  }
+  state.selected = state.selected.filter(item => item !== num);
+  renderGrid();
+  renderChips();
+  updateCalculations();
+}
+
+function renderGrid(){
+  const grid = document.getElementById("gridContainer");
+  grid.innerHTML = "";
+  
+  let currentGridNumbers = [...samplePool];
+  state.selected.forEach(s => {
+    if(!currentGridNumbers.includes(s)) currentGridNumbers.unshift(s);
+  });
+
+  currentGridNumbers.forEach(n => {
+    const btn = document.createElement("button");
+    const isSelected = state.selected.includes(n);
+    btn.className = "num " + (isSelected ? "selected" : "");
+    btn.textContent = n;
+    btn.onclick = () => {
+      if(!state.active) {
+        showToast("ይህ ዙር አልቋል!");
+        return;
+      }
+      
+      if(isSelected) {
+        if(state.selected.length > 1) {
+          state.selected = state.selected.filter(item => item !== n);
+        } else {
+          showToast("ቢያንስ 1 ቁጥር መመረጥ አለበት!");
+          return;
+        }
+      } else {
+        if(state.selected.length < state.count) {
+          state.selected.push(n);
+        } else {
+          showToast(`እርስዎ የመረጡት ሊሚት ${state.count} ቁጥር ብቻ ነው!`);
+          return;
+        }
+      }
+      renderGrid();
+      renderChips();
+      updateCalculations();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function autoPick(){
+  if(!state.active) return;
+  state.selected = [];
+  while(state.selected.length < state.count) {
+    const randNum = Math.floor(Math.random() * 999) + 1;
+    const formatted = String(randNum).padStart(3, "0");
+    if(!state.selected.includes(formatted)) {
+      state.selected.push(formatted);
+    }
+  }
+  renderGrid();
+  renderChips();
+  updateCalculations();
+  showToast("አውቶ ፒክ ተከናውኗል!");
+}
+
+function playGame(){
+  if(!state.active) {
+    showToast("እባክዎ አዲስ ዙር ይጀምሩ!");
+    return;
+  }
+
+  const totalCost = state.stake * state.count;
+  if(state.balance < totalCost){
+    showToast("በቂ ክሬዲት የለዎትም!");
+    return;
+  }
+
+  state.balance -= totalCost;
+  
+  const winningNum = Math.floor(Math.random() * 999) + 1;
+  const winning = String(winningNum).padStart(3, "0");
+  
+  const matchedNumber = state.selected.find(n => n === winning);
+  const won = !!matchedNumber;
+
+  const totalReward = state.stake * 5 * state.count;
+
+  if(won){
+    state.balance += totalReward;
+    showResult(`🎉 አሸንፈዋል! ወጣው: ${winning} (+${totalReward} CR)`, true);
+  } else {
+    showResult(`❌ ተሸንፈዋል! ወጣው: ${winning}`, false);
+  }
+
+  state.history.unshift({
+    round: "#" + String(state.roundNum).padStart(3,"0"),
+    selected: state.selected.length > 3 ? `${state.selected.length} ቁጥሮች ተመርጠዋል` : state.selected.join(", "),
+    result: winning,
+    status: won ? "WIN" : "LOSS",
+    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+  });
+
+  state.active = false;
+  document.getElementById("balanceText").textContent = state.balance + " CR";
+  document.getElementById("nextBtn").style.display = "block";
+  renderHistory();
+  showToast("ጨዋታው ተጠናቀቀ!");
+}
+
+function nextRound(){
+  state.roundNum++;
+  state.active = true;
+  document.getElementById("resultBox").className = "result";
+  document.getElementById("resultBox").textContent = "";
+  document.getElementById("nextBtn").style.display = "none";
+  init();
+  showToast("አዲስ ዙር ተጀመረ!");
+}
+
+function addCredits(){
+  state.balance += 100;
+  document.getElementById("balanceText").textContent = state.balance + " CR";
+  showToast("+100 ዴሞ ክሬዲት ተጨመረ!");
+}
+
+function showResult(msg, won){
+  const box = document.getElementById("resultBox");
+  box.textContent = msg;
+  box.className = won ? "result win" : "result loss";
+}
+
+function renderHistory(){
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
+  if(state.history.length === 0){
+    list.innerHTML = `<div style="text-align:center;color:#9ca3af;padding:10px">ምንም ታሪክ የለም</div>`;
+  } else {
+    state.history.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "history-row";
+      row.innerHTML = `
+        <div>
+          <b>${item.round}</b> (${item.selected})
+          <small style="display:block;color:#9ca3af;margin-top:2px">ወጣ: ${item.result} · ${item.time}</small>
+        </div>
+        <div class="${item.status === 'WIN' ? 'win-badge' : 'loss-badge'}">${item.status}</div>
+      `;
+      list.appendChild(row);
+    });
+  }
+  document.getElementById("historyCount").textContent = state.history.length + " ዙሮች";
+}
+
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(window.timer);
+  window.timer = setTimeout(() => {
+    t.classList.remove("show");
+  }, 2000);
+}
+
+init();
+</script>
+
+</body>
+</html>
