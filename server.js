@@ -15,10 +15,15 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 // Telegram Bot Setup
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
-const BACKEND_URL = process.env.BACKEND_URL || 'https://your-render-app.onrender.com';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://skyway-travel.onrender.com';
 const bot = new Telegraf(BOT_TOKEN);
 
-// Multi-City & Stopover Engine (አዲስ አበባ - ጓንግዙ - ዱባይ 3 ቀናት - አዲስ አበባ)
+// Health Check / Home Route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Multi-City & Stopover Engine
 function mockMultiCityStopoverSearch(stopoverDays) {
   return {
     airline: 'Emirates / Ethiopian Airlines Partner',
@@ -34,7 +39,7 @@ function mockMultiCityStopoverSearch(stopoverDays) {
   };
 }
 
-// API Endpoint: የጉዞ ጥያቄ መቀበያ
+// 1. የጉዞ ጥያቄ መቀበያ API
 app.post('/api/search-multi-city', async (req, res) => {
   try {
     const { passengerName, travelDate, stopoverDays } = req.body;
@@ -44,7 +49,7 @@ app.post('/api/search-multi-city', async (req, res) => {
     const { data: quote, error } = await supabase.from('flight_quotes').insert([{
       passenger_name: passengerName,
       ethiopian_date: travelDate,
-      gregorian_date: travelDate, // በቀጥታ በሰንጠረዥ እንዲቀመጥ
+      gregorian_date: travelDate,
       route_type: 'MULTI_CITY_STOPOVER',
       origin: 'ADD',
       destination: 'CAN',
@@ -61,7 +66,6 @@ app.post('/api/search-multi-city', async (req, res) => {
 
     if (error) throw error;
 
-    // ለአድሚን በቴሌግራም ማሳወቂያ መላክ
     if (ADMIN_CHAT_ID) {
       await bot.telegram.sendMessage(ADMIN_CHAT_ID, 
         `🚨 **አዲስ የንግድ ጉዞ ጥያቄ መጥቷል!**\n\n` +
@@ -79,7 +83,22 @@ app.post('/api/search-multi-city', async (req, res) => {
   }
 });
 
-// API Endpoint: የኪሳራ መከላከያ እና የአድሚን ማረጋገጫ
+// 2. ሁሉንም ኦርደሮች ለማምጣት API (ለአድሚን ዳሽቦርድ)
+app.get('/api/admin/orders', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('flight_quotes')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) throw error;
+    res.json({ success: true, orders: data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 3. የኪሳራ መከላከያ እና የአድሚን ማረጋገጫ API
 app.post('/api/admin/approve-package', async (req, res) => {
   try {
     const { quoteId, finalSellingPriceETB } = req.body;
@@ -94,7 +113,7 @@ app.post('/api/admin/approve-package', async (req, res) => {
     if (finalSellingPriceETB < minimumCostETB) {
       return res.status(400).json({ 
         success: false, 
-        message: `⚠️ ክልከላ፡ የዚህ ፓኬጅ ዝቅተኛው ወጪ ${minimumCostETB.toLocaleString()} ETB ነው። ከዚህ በታች መሸጥ ያስከስርዎታል!` 
+        message: `⚠️ ክልከላ፡ ዝቅተኛው ወጪ ${minimumCostETB.toLocaleString()} ETB ነው። ከዚህ በታች መሸጥ ያስከስርዎታል!` 
       });
     }
 
@@ -115,18 +134,8 @@ bot.start((ctx) => {
     Markup.inlineKeyboard([[Markup.button.callback('✈️ የጉዞ ማሳሰቢያ', 'INFO')]])
   );
 });
-// ዋናውን ሊንክ ሲከፍቱ የሚታየው መልእክት
-app.get('/', (req, res) => {
-  res.send('Sky Way Travel Agency Bot & API is running successfully! 🚀');
-});
-
-
-bot.action('INFO', (ctx) => {
-  ctx.reply('እባክዎን የጉዞ ጥያቄዎን በሲስተሙ በኩል ያስገቡ።');
-});
 
 bot.launch();
 
-// Start Express Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Sky Way Full System running on port ${PORT}`));
