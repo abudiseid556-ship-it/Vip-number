@@ -1,13 +1,9 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const { Telegraf, Markup } = require('telegraf');
-const path = require('path');
 
 const app = express();
 app.use(express.json());
-
-// ፋይሎችን በቀጥታ ከዋናው ፎልደር እንዲያነብ ማድረግ (public ፎልደር አያስፈልግም)
-app.use(express.static(__dirname));
 
 // Supabase Setup
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -20,9 +16,155 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
 const BACKEND_URL = process.env.BACKEND_URL || 'https://skyway-travel.onrender.com';
 const bot = new Telegraf(BOT_TOKEN);
 
-// ዋናውን ሊንክ ሲከፍቱ በቀጥታ admin.html እንዲታይ ማድረግ
+// 🌐 የአድሚን ዳሽቦርድ ዌብ ገጽ (በቀጥታ ከሰርቨሩ የሚሰራ - ፋይል አያስፈልገውም)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.send(`
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky Way - Admin Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h2 { color: #0f2b48; text-align: center; margin-bottom: 25px; }
+        .search-box { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { background-color: #0f2b48; color: white; }
+        .status-waiting { color: #d97706; font-weight: bold; }
+        .status-approved { color: #16a34a; font-weight: bold; }
+        .action-btn { background: #0f2b48; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+        .action-btn:hover { background: #1b3b6f; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 10px; width: 350px; text-align: center; }
+        .modal-content input { width: 100%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .modal-content button { padding: 10px 20px; background: #16a34a; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .close-btn { background: #dc2626; margin-left: 10px; }
+        #msg { margin-top: 10px; font-weight: bold; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>✈️ Sky Way Travel Agency - Admin Dashboard</h2>
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 በተጓዥ ስም ይፈልጉ..." onkeyup="filterOrders()">
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ተጓዥ ስም</th>
+                    <th>መስመር / Stopover</th>
+                    <th>ቀን</th>
+                    <th>ሁኔታ (Status)</th>
+                    <th>እርምጃ</th>
+                </tr>
+            </thead>
+            <tbody id="ordersBody">
+                <tr><td colspan="5" style="text-align:center;">መረጃዎች በመጫን ላይ...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="approvalModal" class="modal">
+    <div class="modal-content">
+        <h3>የፓኬጅ ዋጋ ማጽደቂያ</h3>
+        <p id="modalPassenger" style="font-weight: bold; color: #555;"></p>
+        <input type="hidden" id="activeQuoteId">
+        <label>የመሸጫ ዋጋ (በ ETB)፦</label>
+        <input type="number" id="sellingPriceETB" placeholder="ምሳሌ፦ 145000">
+        <div>
+            <button onclick="submitApproval()">አጽድቅ</button>
+            <button class="close-btn" onclick="closeModal()">ዝጋ</button>
+        </div>
+        <div id="msg"></div>
+    </div>
+</div>
+
+<script>
+let allOrders = [];
+
+async function fetchOrders() {
+    try {
+        const res = await fetch('/api/admin/orders');
+        const data = await res.json();
+        if(data.success) {
+            allOrders = data.orders;
+            displayOrders(allOrders);
+        }
+    } catch (err) {
+        console.error('Error fetching orders:', err);
+    }
+}
+
+function displayOrders(orders) {
+    const tbody = document.getElementById('ordersBody');
+    tbody.innerHTML = '';
+    if(orders.length === 0) {
+        tbody.innerHTML = \`<tr><td colspan="5" style="text-align:center;">ምንም ትዕዛዝ አልተገኘም</td></tr>\`;
+        return;
+    }
+    orders.forEach(o => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = \`
+            <td>\${o.passenger_name}</td>
+            <td>\${o.origin} ➔ \${o.destination} (\${o.stopover_city})</td>
+            <td>\${o.ethiopian_date}</td>
+            <td><span class="\${o.status === 'APPROVED' ? 'status-approved' : 'status-waiting'}">\${o.status}</span></td>
+            <td><button class="action-btn" onclick="openModal('\${o.id}', '\che\${o.passenger_name}')">አስተዳድር</button></td>
+        \`;
+        tbody.appendChild(tr);
+    });
+}
+
+function filterOrders() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allOrders.filter(o => o.passenger_name.toLowerCase().includes(query));
+    displayOrders(filtered);
+}
+
+function openModal(id, name) {
+    document.getElementById('activeQuoteId').value = id;
+    document.getElementById('modalPassenger').innerText = \`ተጓዥ: \${name}\`;
+    document.getElementById('sellingPriceETB').value = '';
+    document.getElementById('msg').innerText = '';
+    document.getElementById('approvalModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('approvalModal').style.display = 'none';
+    fetchOrders();
+}
+
+async function submitApproval() {
+    const quoteId = document.getElementById('activeQuoteId').value;
+    const price = document.getElementById('sellingPriceETB').value;
+    const msgDiv = document.getElementById('msg');
+    if(!price) {
+        msgDiv.style.color = "red";
+        msgDiv.innerText = "እባክዎን ዋጋ ያስገቡ!";
+        return;
+    }
+    const res = await fetch('/api/admin/approve-package', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quoteId, finalSellingPriceETB: parseFloat(price) })
+    });
+    const data = await res.json();
+    msgDiv.style.color = data.success ? "green" : "red";
+    msgDiv.innerText = data.message;
+    if(data.success) {
+        setTimeout(closeModal, 1500);
+    }
+}
+
+fetchOrders();
+</script>
+</body>
+</html>
+  `);
 });
 
 // Multi-City & Stopover Engine
@@ -75,7 +217,7 @@ app.post('/api/search-multi-city', async (req, res) => {
         `📍 **መስመር:** ADD ➔ CAN (Stopover: DXB - ${days} ቀናት)\n` +
         `📅 **ቀን:** ${travelDate}\n` +
         `💵 **አጠቃላይ ጅምላ ወጪ:** $${travelPackage.net_flight_fare_usdt + travelPackage.net_hotel_usdt + travelPackage.net_visa_usdt} USDT`,
-        Markup.inlineKeyboard([[Markup.button.url('⚙️ በዳሽቦርድ አጽድቅ', `${BACKEND_URL}/admin.html?quoteId=${quote[0].id}`)]])
+        Markup.inlineKeyboard([[Markup.button.url('⚙️ በዳሽቦርድ አጽድቅ', `${BACKEND_URL}/?quoteId=${quote[0].id}`)]])
       );
     }
 
