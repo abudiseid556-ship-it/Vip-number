@@ -115,6 +115,11 @@ bot.start((ctx) => {
     Markup.inlineKeyboard([[Markup.button.callback('✈️ የጉዞ ማሳሰቢያ', 'INFO')]])
   );
 });
+// ዋናውን ሊንክ ሲከፍቱ የሚታየው መልእክት
+app.get('/', (req, res) => {
+  res.send('Sky Way Travel Agency Bot & API is running successfully! 🚀');
+});
+
 
 bot.action('INFO', (ctx) => {
   ctx.reply('እባክዎን የጉዞ ጥያቄዎን በሲስተሙ በኩል ያስገቡ።');
