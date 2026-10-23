@@ -5,7 +5,9 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// ፋይሎችን በቀጥታ ከዋናው ፎልደር እንዲያነብ ማድረግ (public ፎልደር አያስፈልግም)
+app.use(express.static(__dirname));
 
 // Supabase Setup
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -18,9 +20,9 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
 const BACKEND_URL = process.env.BACKEND_URL || 'https://skyway-travel.onrender.com';
 const bot = new Telegraf(BOT_TOKEN);
 
-// Health Check / Home Route
+// ዋናውን ሊንክ ሲከፍቱ በቀጥታ admin.html እንዲታይ ማድረግ
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // Multi-City & Stopover Engine
@@ -109,7 +111,6 @@ app.post('/api/admin/approve-package', async (req, res) => {
     const totalNetUSDT = quote.net_fare_1to2_usdt + quote.hotel_net_usdt + quote.visa_net_usdt;
     const minimumCostETB = totalNetUSDT * rate;
 
-    // 🛑 የኪሳራ መከላከያ (Loss Guardrail)
     if (finalSellingPriceETB < minimumCostETB) {
       return res.status(400).json({ 
         success: false, 
