@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky Way Admin Approval</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
+        .card { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #0f2b48; text-align: center; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; margin-top: 15px; cursor: pointer; }
+        #statusMessage { margin-top: 15px; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Sky Way Admin Package Approval</h2>
+    <form id="approvalForm">
+        <input type="hidden" id="quoteId" value="">
+        
+        <label>የአጠቃላይ ፓኬጅ መሸጫ ዋጋ (በ ETB)፦</label>
+        <input type="number" id="finalPriceETB" placeholder="ምሳሌ፦ 145000" required>
+
+        <button type="submit">የመጨረሻውን ዋጋ አጽድቅ & ላክ</button>
+    </form>
+    <div id="statusMessage"></div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById('quoteId').value = urlParams.get('quoteId');
+
+    document.getElementById('approvalForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const quoteId = document.getElementById('quoteId').value;
+        const price = document.getElementById('finalPriceETB').value;
+
+        const res = await fetch('/api/admin/approve-package', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quoteId: quoteId, finalSellingPriceETB: parseFloat(price) })
+        });
+
+        const data = await res.json();
+        const msgDiv = document.getElementById('statusMessage');
+
+        if(data.success) {
+            msgDiv.style.color = "green";
+            msgDiv.innerText = data.message;
+        } else {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = data.message;
+        }
+    });
+</script>
+
+</body>
+</html>
