@@ -116,3 +116,8 @@ app.post('/api/admin/approve-package', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Sky Way Unified System Running on Port ${PORT}`));
+// ዋናውን ሊንክ ሲከፍቱ የሚታየው መልእክት
+app.get('/', (req, res) => {
+  res.send('Sky Way Travel Agency Bot & API is running successfully! 🚀');
+});
+
