@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SKY WAY | Travel Admin</title>
+<style>
+:root{--navy:#102b55;--blue:#1769e0;--gold:#f2b632;--bg:#f3f6fb;--ink:#18263d;--muted:#6e7d93;--line:#e1e8f1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+header{background:linear-gradient(120deg,#0c2b58,#1769e0);color:white;padding:22px clamp(16px,4vw,44px);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{font-weight:850;font-size:22px;letter-spacing:.4px}.brand span{color:#ffd36d}header small{display:block;color:#dbe8ff;font-weight:500}
+main{max-width:1250px;margin:24px auto;padding:0 16px}.panel,.stat{background:white;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px #183c6810}
+.login{max-width:430px;margin:42px auto;padding:24px}.panel{padding:20px;margin-bottom:18px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{padding:18px}.stat label{color:var(--muted);font-size:13px}.stat strong{display:block;font-size:25px;margin-top:6px}
+input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:11px 12px;border:1px solid #ccd7e5;border-radius:10px;background:white;color:var(--ink)}textarea{min-height:76px;resize:vertical}
+button{border:0;border-radius:10px;background:var(--blue);color:white;padding:11px 15px;font-weight:700;cursor:pointer}button.secondary{background:#eaf1fb;color:var(--navy)}button.gold{background:var(--gold);color:#28200d}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:12px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}.toolbar input{max-width:280px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:900px}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.4px}td small{display:block;color:var(--muted)}.pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#eaf1fb;color:#234a80;font-size:11px;font-weight:800}.message{margin-top:10px;color:#a12d2d;white-space:pre-wrap}.hidden{display:none!important}.hint{color:var(--muted);font-size:13px}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.row{grid-template-columns:1fr}header{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header><div class="brand">✈ SKY <span>WAY</span><small>TRAVEL AGENCY · ADMIN CONSOLE</small></div><div>Requests · Quotes · Operations</div></header>
+<main>
+<section id="login" class="panel login">
+<h2>Admin sign in</h2><p class="hint">Enter the private Admin API key configured in Render.</p>
+<div class="field"><label>Admin API key</label><input id="key" type="password" autocomplete="current-password" placeholder="API key"></div>
+<button onclick="signIn()">Open dashboard</button><div id="loginMsg" class="message"></div>
+</section>
+<section id="app" class="hidden">
+<div class="stats">
+<div class="stat"><label>Total requests</label><strong id="total">—</strong></div>
+<div class="stat"><label>New requests</label><strong id="new">—</strong></div>
+<div class="stat"><label>Paid / confirmed</label><strong id="paid">—</strong></div>
+<div class="stat"><label>Estimated profit (ETB)</label><strong id="profit">—</strong></div>
+</div>
+<div class="panel">
+<div class="toolbar"><div><h2 style="margin:0">Travel requests</h2><p class="hint">Prices and availability must be confirmed by your agency/provider.</p></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><select id="filter" onchange="loadRequests()"><option value="">All statuses</option><option>NEW</option><option>REVIEWING</option><option>QUOTED</option><option>AWAITING_PAYMENT</option><option>PAID</option><option>CONFIRMED</option><option>COMPLETED</option><option>CANCELLED</option></select><button class="secondary" onclick="refreshAll()">Refresh</button></div></div>
+<div id="listMsg" class="message"></div><div class="tablewrap"><table><thead><tr><th>Request</th><th>Customer</th><th>Journey / details</th><th>Status</th><th>Quote & profit</th><th>Update</th></tr></thead><tbody id="rows"><tr><td colspan="6">Sign in to load requests.</td></tr></tbody></table></div>
+</div>
+</section>
+</main>
+<script>
+let adminKey="";
+const money=n=>new Intl.NumberFormat("en-ET",{maximumFractionDigits:2}).format(Number(n||0))+" ETB";
+function headers(){return {"content-type":"application/json","x-admin-api-key":adminKey}}
+async function api(url,opts={}){const r=await fetch(url,{...opts,headers:{...headers(),...(opts.headers||{})}});let d={};try{d=await r.json()}catch{}if(!r.ok)throw Error(d.error||"Request failed ("+r.status+")");return d}
+async function signIn(){adminKey=document.getElementById("key").value.trim();if(!adminKey)return;try{await api("/api/admin/summary");sessionStorage.setItem("sky_admin_key",adminKey);document.getElementById("login").classList.add("hidden");document.getElementById("app").classList.remove("hidden");await refreshAll()}catch(e){document.getElementById("loginMsg").textContent=e.message}}
+async function refreshAll(){document.getElementById("listMsg").textContent="Loading…";try{const [s,r]=await Promise.all([api("/api/admin/summary"),api("/api/admin/requests"+(document.getElementById("filter").value?"?status="+encodeURIComponent(document.getElementById("filter").value):""))]);document.getElementById("total").textContent=s.totalRequests;document.getElementById("new").textContent=s.newRequests;document.getElementById("paid").textContent=s.paidOrConfirmed;document.getElementById("profit").textContent=money(s.estimatedProfitEtb);render(r.requests||[]);document.getElementById("listMsg").textContent=""}catch(e){document.getElementById("listMsg").textContent=e.message}}
+function loadRequests(){refreshAll()}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function render(items){const body=document.getElementById("rows");if(!items.length){body.innerHTML='<tr><td colspan="6">No requests found.</td></tr>';return}
+body.innerHTML=items.map(x=>`<tr>
+<td><b>SW-${x.id}</b><small>${esc(x.request_type)} · ${new Date(x.created_at).toLocaleString()}</small></td>
+<td><b>${esc(x.customer_name)}</b><small>${esc(x.phone)}</small><small>${esc(x.nationality||"")}</small></td>
+<td>${esc(x.origin||"—")} → ${esc(x.destination||"—")}<small>Departure: ${esc(x.departure_date||"—")} · Passengers: ${esc(x.passengers)}</small><small>${esc(x.stopover_country?("Stopover: "+x.stopover_country+" ("+x.stopover_days+" days) "):"")}${esc(x.details||"")}</small></td>
+<td><span class="pill">${esc(x.status)}</span><small>Payment: ${esc(x.payment_status)}</small></td>
+<td>Cost <b>${money(x.quoted_cost_etb)}</b><small>Sell ${money(x.quoted_price_etb)}</small><small>Extra expenses ${money(x.extra_expenses_etb)}</small><small>Est. profit <b>${money(Number(x.quoted_price_etb||0)-Number(x.quoted_cost_etb||0)-Number(x.extra_expenses_etb||0))}</b></small></td>
+<td style="min-width:210px"><select id="s${x.id}">${["NEW","REVIEWING","QUOTED","AWAITING_PAYMENT","PAID","CONFIRMED","COMPLETED","CANCELLED"].map(v=>`<option ${x.status===v?"selected":""}>${v}</option>`).join("")}</select>
+<select id="p${x.id}" style="margin-top:6px">${["UNPAID","RECEIPT_SUBMITTED","PAID","REFUNDED"].map(v=>`<option ${x.payment_status===v?"selected":""}>${v}</option>`).join("")}</select>
+<input id="c${x.id}" type="number" min="0" step=".01" placeholder="Cost ETB" value="${Number(x.quoted_cost_etb||0)}" style="margin-top:6px">
+<input id="v${x.id}" type="number" min="0" step=".01" placeholder="Sell price ETB" value="${Number(x.quoted_price_etb||0)}" style="margin-top:6px">
+<input id="e${x.id}" type="number" min="0" step=".01" placeholder="Extra expenses ETB" value="${Number(x.extra_expenses_etb||0)}" style="margin-top:6px">
+<textarea id="n${x.id}" placeholder="Admin notes">${esc(x.admin_notes||"")}</textarea><button onclick="save(${x.id})" style="margin-top:6px">Save changes</button></td></tr>`).join("")}
+async function save(id){try{await api("/api/admin/requests/"+id,{method:"PATCH",body:JSON.stringify({status:document.getElementById("s"+id).value,payment_status:document.getElementById("p"+id).value,quoted_cost_etb:Number(document.getElementById("c"+id).value||0),quoted_price_etb:Number(document.getElementById("v"+id).value||0),extra_expenses_etb:Number(document.getElementById("e"+id).value||0),admin_notes:document.getElementById("n"+id).value})});document.getElementById("listMsg").textContent="Saved request SW-"+id;await refreshAll()}catch(e){document.getElementById("listMsg").textContent=e.message}}
+adminKey=sessionStorage.getItem("sky_admin_key")||"";if(adminKey){document.getElementById("key").value=adminKey;signIn()}
+</script>
+</body></html>
